@@ -53,13 +53,14 @@ export default function ReceiptCamera() {
 
   return (
     <View style={styles.container}>
-      <CameraView style={styles.camera} facing="back" ref={cameraRef}>
+      <CameraView style={styles.camera} facing="back" ref={cameraRef} />
+      <View style={styles.overlay}>
         <View style={styles.captureContainer}>
           <TouchableOpacity style={styles.button} onPress={takePicture}>
             <View style={styles.captureButton} />
           </TouchableOpacity>
         </View>
-      </CameraView>
+      </View>
     </View>
   );
 }
@@ -71,6 +72,12 @@ const styles = StyleSheet.create({
   },
   camera: {
     flex: 1,
+  },
+  overlay: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
   },
   buttonContainer: {
     flexDirection: 'row',

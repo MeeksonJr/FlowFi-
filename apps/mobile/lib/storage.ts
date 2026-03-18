@@ -1,4 +1,5 @@
 import * as FileSystem from 'expo-file-system';
+import * as FileSystemLegacy from 'expo-file-system/legacy';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from './supabase';
 import { decode } from 'base64-arraybuffer';
@@ -38,7 +39,7 @@ export async function syncQueue() {
       const extension = item.uri.split('.').pop()?.toLowerCase() || 'jpg';
       const fileName = `${user.id}/${item.id}.${extension}`;
       
-      const fileBase64 = await FileSystem.readAsStringAsync(item.uri, {
+      const fileBase64 = await FileSystemLegacy.readAsStringAsync(item.uri, {
         encoding: 'base64',
       });
 
@@ -52,11 +53,24 @@ export async function syncQueue() {
 
       const { data: publicUrlData } = supabase.storage.from('receipts').getPublicUrl(fileName);
       
-      await supabase.from('receipts').insert({
+      const { data: newReceipt } = await supabase.from('receipts').insert({
         user_id: user.id,
         image_url: publicUrlData.publicUrl,
         status: 'pending'
-      });
+      }).select().single();
+
+      // Trigger the AI parsing API on the Web backend
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (newReceipt && sessionData.session) {
+        await fetch('https://flow-fi-web.vercel.app/api/receipt/parse', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${sessionData.session.access_token}`
+          },
+          body: JSON.stringify({ receiptId: newReceipt.id })
+        });
+      }
 
       remainingQueue.shift();
     } catch (e) {
