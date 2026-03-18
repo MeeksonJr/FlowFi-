@@ -9,15 +9,19 @@
     "web": "expo start --web"
   },
   "dependencies": {
+    "@react-native-async-storage/async-storage": "1.24.0",
+    "@repo/supabase": "workspace:*",
+    "@repo/types": "workspace:*",
+    "@supabase/supabase-js": "^2.48.0",
+    "base64-arraybuffer": "^1.0.2",
     "expo": "~55.0.6",
+    "expo-camera": "^55.0.10",
+    "expo-file-system": "^55.0.11",
+    "expo-image-manipulator": "^55.0.11",
     "expo-status-bar": "~55.0.4",
     "react": "19.2.0",
     "react-native": "0.83.2",
-    "@react-native-async-storage/async-storage": "1.24.0",
-    "@supabase/supabase-js": "^2.48.0",
-    "react-native-url-polyfill": "^2.0.0",
-    "@repo/supabase": "workspace:*",
-    "@repo/types": "workspace:*"
+    "react-native-url-polyfill": "^2.0.0"
   },
   "devDependencies": {
     "@types/react": "~19.2.2",

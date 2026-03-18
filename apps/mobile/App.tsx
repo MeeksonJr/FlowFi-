@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, TextInput, Button, Alert } from 'react-native';
 import { supabase } from './lib/supabase';
+import ReceiptCamera from './components/ReceiptCamera';
 import { Session } from '@supabase/supabase-js';
 import { StatusBar } from 'expo-status-bar';
 
@@ -81,6 +82,7 @@ function Auth() {
 function Dashboard({ session }: { session: Session }) {
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState('');
+  const [showCamera, setShowCamera] = useState(false);
 
   useEffect(() => {
     async function getProfile() {
@@ -109,11 +111,27 @@ function Dashboard({ session }: { session: Session }) {
     getProfile();
   }, [session]);
 
+  if (showCamera) {
+    return (
+      <View style={{ flex: 1, marginTop: 40 }}>
+        <Button title="Back to Dashboard" onPress={() => setShowCamera(false)} />
+        <View style={{ flex: 1 }}>
+          <ReceiptCamera />
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Dashboard</Text>
       <Text>Welcome {session.user.email}</Text>
       <Text>Your role is: {role || 'Not set'}</Text>
+      
+      <View style={styles.mt20}>
+        <Button title="Scan Receipt" onPress={() => setShowCamera(true)} />
+      </View>
+
       <View style={styles.mt20}>
         <Button title="Sign Out" onPress={() => supabase.auth.signOut()} />
       </View>
