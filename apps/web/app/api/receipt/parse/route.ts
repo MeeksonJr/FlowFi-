@@ -3,7 +3,7 @@ import { createClient as createServerClient } from '@/utils/supabase/server';
 import { createClient } from '@supabase/supabase-js';
 import { GoogleGenAI } from '@google/genai';
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_KEY || process.env.GEMINI_API_KEY });
 
 export async function POST(request: Request) {
   try {
@@ -11,11 +11,12 @@ export async function POST(request: Request) {
     let { data: { user } } = await supabaseCookies.auth.getUser();
 
     // Fallback for mobile app using Bearer token
+    let mobileToken: string | null = null;
     if (!user) {
       const authHeader = request.headers.get('Authorization');
-      const token = authHeader?.replace('Bearer ', '');
-      if (token) {
-        const { data } = await supabaseCookies.auth.getUser(token);
+      mobileToken = authHeader?.replace('Bearer ', '') || null;
+      if (mobileToken) {
+        const { data } = await supabaseCookies.auth.getUser(mobileToken);
         user = data?.user;
       }
     }
@@ -24,9 +25,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const supabaseAdmin = createClient(
+    // Authenticate a fresh client specifically as the user, bypassing Next.js cookies
+    const supabaseAuthClient = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      mobileToken ? {
+        global: {
+          headers: { Authorization: `Bearer ${mobileToken}` }
+        }
+      } : undefined
     );
 
     const { receiptId } = await request.json();
@@ -34,7 +41,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing receiptId' }, { status: 400 });
     }
 
-    const { data: quota } = await supabaseAdmin
+    const { data: quota } = await supabaseAuthClient
       .from('usage_quotas')
       .select('*')
       .eq('user_id', user.id)
@@ -48,7 +55,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Quota exceeded' }, { status: 403 });
     }
 
-    const { data: receipt } = await supabaseAdmin
+    const { data: receipt } = await supabaseAuthClient
       .from('receipts')
       .select('*')
       .eq('id', receiptId)
@@ -110,12 +117,12 @@ export async function POST(request: Request) {
       parsedData = JSON.parse(parsedDataText);
     }
 
-    await supabaseAdmin.from('receipts').update({
+    await supabaseAuthClient.from('receipts').update({
       parsed_data: parsedData,
       status: 'parsed',
     }).eq('id', receiptId);
 
-    await supabaseAdmin.from('usage_quotas').update({
+    await supabaseAuthClient.from('usage_quotas').update({
       ai_scans_used: quota.ai_scans_used + 1
     }).eq('id', quota.id);
 
