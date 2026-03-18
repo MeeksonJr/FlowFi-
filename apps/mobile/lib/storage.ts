@@ -47,6 +47,7 @@ export async function syncQueue() {
         .from('receipts')
         .upload(fileName, decode(fileBase64), {
           contentType: `image/${extension === 'jpg' ? 'jpeg' : extension}`,
+          upsert: true
         });
 
       if (error) throw error;
@@ -59,20 +60,23 @@ export async function syncQueue() {
         status: 'pending'
       }).select().single();
 
-      // Trigger the AI parsing API on the Web backend
       const { data: sessionData } = await supabase.auth.getSession();
-      if (newReceipt && sessionData.session) {
-        console.log('Calling Parse API for Receipt ID:', newReceipt.id);
-        const res = await fetch('https://flow-fi-web.vercel.app/api/receipt/parse', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${sessionData.session.access_token}`
-          },
-          body: JSON.stringify({ receiptId: newReceipt.id })
-        });
-        const resText = await res.text();
-        console.log('--- PARSE API RESPONSE ---', res.status, resText);
+      try {
+        if (newReceipt && sessionData.session) {
+          console.log('Calling Parse API for Receipt ID:', newReceipt.id);
+          const res = await fetch('https://flow-fi-web.vercel.app/api/receipt/parse', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${sessionData.session.access_token}`
+            },
+            body: JSON.stringify({ receiptId: newReceipt.id })
+          });
+          const resText = await res.text();
+          console.log('--- PARSE API RESPONSE ---', res.status, resText);
+        }
+      } catch (apiErr) {
+        console.error('AI Parse trigger failed (Queue continuing):', apiErr);
       }
 
       remainingQueue.shift();
