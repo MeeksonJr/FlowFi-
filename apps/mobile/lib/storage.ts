@@ -62,7 +62,8 @@ export async function syncQueue() {
       // Trigger the AI parsing API on the Web backend
       const { data: sessionData } = await supabase.auth.getSession();
       if (newReceipt && sessionData.session) {
-        await fetch('https://flow-fi-web.vercel.app/api/receipt/parse', {
+        console.log('Calling Parse API for Receipt ID:', newReceipt.id);
+        const res = await fetch('https://flow-fi-web.vercel.app/api/receipt/parse', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -70,6 +71,8 @@ export async function syncQueue() {
           },
           body: JSON.stringify({ receiptId: newReceipt.id })
         });
+        const resText = await res.text();
+        console.log('--- PARSE API RESPONSE ---', res.status, resText);
       }
 
       remainingQueue.shift();
