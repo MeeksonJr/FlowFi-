@@ -4,7 +4,6 @@ import DashboardClient from './DashboardClient'
 import { addManualTransaction } from './actions'
 import CsvImport from './CsvImport'
 import DashboardStats from './DashboardStats'
-import SentryTestButton from './SentryTestButton'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -82,8 +81,6 @@ export default async function DashboardPage() {
           </div>
 
           <CsvImport />
-
-          <SentryTestButton />
         </div>
       </div>
     </div>
