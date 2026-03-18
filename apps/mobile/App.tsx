@@ -135,7 +135,10 @@ function Dashboard({ session }: { session: Session }) {
       if (txError) throw txError;
 
       const { error: rxError } = await supabase.from('receipts').update({
-        status: 'confirmed'
+        status: 'confirmed',
+        merchant_name: merchant,
+        total_amount: parseFloat(amount),
+        tax_amount: selectedReceipt.parsed_data?.taxAmount || 0
       }).eq('id', selectedReceipt.id);
       if (rxError) throw rxError;
 

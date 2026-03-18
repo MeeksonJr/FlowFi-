@@ -119,6 +119,9 @@ export async function POST(request: Request) {
 
     await supabaseAuthClient.from('receipts').update({
       parsed_data: parsedData,
+      merchant_name: parsedData.merchantName,
+      total_amount: parsedData.totalAmount,
+      tax_amount: parsedData.taxAmount,
       status: 'parsed',
     }).eq('id', receiptId);
 
