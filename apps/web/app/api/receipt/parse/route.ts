@@ -1,20 +1,21 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/utils/supabase/server';
+import { createClient as createServerClient } from '@/utils/supabase/server';
+import { createClient } from '@supabase/supabase-js';
 import { GoogleGenAI } from '@google/genai';
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 export async function POST(request: Request) {
   try {
-    const supabase = await createClient();
-    let { data: { user } } = await supabase.auth.getUser();
+    const supabaseCookies = await createServerClient();
+    let { data: { user } } = await supabaseCookies.auth.getUser();
 
     // Fallback for mobile app using Bearer token
     if (!user) {
       const authHeader = request.headers.get('Authorization');
       const token = authHeader?.replace('Bearer ', '');
       if (token) {
-        const { data } = await supabase.auth.getUser(token);
+        const { data } = await supabaseCookies.auth.getUser(token);
         user = data?.user;
       }
     }
@@ -23,12 +24,17 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
     const { receiptId } = await request.json();
     if (!receiptId) {
       return NextResponse.json({ error: 'Missing receiptId' }, { status: 400 });
     }
 
-    const { data: quota } = await supabase
+    const { data: quota } = await supabaseAdmin
       .from('usage_quotas')
       .select('*')
       .eq('user_id', user.id)
@@ -42,7 +48,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Quota exceeded' }, { status: 403 });
     }
 
-    const { data: receipt } = await supabase
+    const { data: receipt } = await supabaseAdmin
       .from('receipts')
       .select('*')
       .eq('id', receiptId)
@@ -104,12 +110,12 @@ export async function POST(request: Request) {
       parsedData = JSON.parse(parsedDataText);
     }
 
-    await supabase.from('receipts').update({
+    await supabaseAdmin.from('receipts').update({
       parsed_data: parsedData,
       status: 'parsed',
     }).eq('id', receiptId);
 
-    await supabase.from('usage_quotas').update({
+    await supabaseAdmin.from('usage_quotas').update({
       ai_scans_used: quota.ai_scans_used + 1
     }).eq('id', quota.id);
 
