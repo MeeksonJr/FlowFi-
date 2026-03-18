@@ -90,6 +90,9 @@ importers:
       next:
         specifier: 16.1.5
         version: 16.1.5(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      papaparse:
+        specifier: ^5.5.3
+        version: 5.5.3
       react:
         specifier: ^19.2.0
         version: 19.2.0
@@ -109,6 +112,9 @@ importers:
       '@types/node':
         specifier: ^22.15.3
         version: 22.15.3
+      '@types/papaparse':
+        specifier: ^5.5.2
+        version: 5.5.2
       '@types/react':
         specifier: 19.2.2
         version: 19.2.2
@@ -1397,6 +1403,9 @@ packages:
 
   '@types/node@22.15.3':
     resolution: {integrity: sha512-lX7HFZeHf4QG/J7tBZqrCAXwz9J5RD56Y6MpP0eJkka8p+K0RY/yBTW7CYFJ4VGCclxqOLKmiGP5juQc6MKgcw==}
+
+  '@types/papaparse@5.5.2':
+    resolution: {integrity: sha512-gFnFp/JMzLHCwRf7tQHrNnfhN4eYBVYYI897CGX4MY1tzY9l2aLkVyx2IlKZ/SAqDbB3I1AOZW5gTMGGsqWliA==}
 
   '@types/phoenix@1.6.7':
     resolution: {integrity: sha512-oN9ive//QSBkf19rfDv45M7eZPi0eEXylht2OLEXicu5b4KoQ1OzXIw+xDSGWxSxe1JmepRR/ZH283vsu518/Q==}
@@ -3214,6 +3223,9 @@ packages:
   p-try@2.2.0:
     resolution: {integrity: sha512-R4nPAVTAU0B9D35/Gk3uJf/7XYbQcyohSKdvAxIRSNghFl4e71hVoGnBNQz9cWaXxO2I10KTC+3jMdvvoKw6dQ==}
     engines: {node: '>=6'}
+
+  papaparse@5.5.3:
+    resolution: {integrity: sha512-5QvjGxYVjxO59MGU2lHVYpRWBBtKHnlIAcSe1uNFCkkptUh63NFRj0FJQm7nR67puEruUci/ZkjmEFrjCAyP4A==}
 
   parent-module@1.0.1:
     resolution: {integrity: sha512-GQ2EWRpQV8/o+Aw8YqtfZZPfNRWZYkbidE9k5rpl/hC3vtHHBfGm2Ifi6qWV+coDGkrUKZAxE3Lot5kcsRlh+g==}
@@ -5498,6 +5510,10 @@ snapshots:
     dependencies:
       undici-types: 6.21.0
 
+  '@types/papaparse@5.5.2':
+    dependencies:
+      '@types/node': 22.15.3
+
   '@types/phoenix@1.6.7': {}
 
   '@types/react-dom@19.2.2(@types/react@19.2.2)':
@@ -7779,6 +7795,8 @@ snapshots:
       retry: 0.13.1
 
   p-try@2.2.0: {}
+
+  papaparse@5.5.3: {}
 
   parent-module@1.0.1:
     dependencies:

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, TextInput, Button, Alert } from 'react-native';
+import { StyleSheet, Text, View, TextInput, Button, Alert, ScrollView, Image } from 'react-native';
 import { supabase } from './lib/supabase';
 import ReceiptCamera from './components/ReceiptCamera';
 import { Session } from '@supabase/supabase-js';
@@ -83,38 +83,76 @@ function Dashboard({ session }: { session: Session }) {
   const [loading, setLoading] = useState(true);
   const [role, setRole] = useState('');
   const [showCamera, setShowCamera] = useState(false);
+  const [pendingReceipts, setPendingReceipts] = useState<any[]>([]);
+  const [selectedReceipt, setSelectedReceipt] = useState<any>(null);
+
+  const [merchant, setMerchant] = useState('');
+  const [amount, setAmount] = useState('');
+  const [description, setDescription] = useState('');
 
   useEffect(() => {
-    async function getProfile() {
-      try {
-        setLoading(true);
-        if (!session?.user) throw new Error('No user on the session!');
-        const { data, error, status } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', session?.user.id)
-          .single();
-        if (error && status !== 406) {
-          throw error;
-        }
-        if (data) {
-          setRole(data.role || '');
-        }
-      } catch (error) {
-        if (error instanceof Error) {
-          Alert.alert(error.message);
-        }
-      } finally {
-        setLoading(false);
-      }
-    }
-    getProfile();
+    fetchData();
   }, [session]);
+
+  async function fetchData() {
+    try {
+      setLoading(true);
+      if (!session?.user) return;
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', session.user.id)
+        .single();
+      if (profile) setRole(profile.role || '');
+
+      const { data: receipts } = await supabase
+        .from('receipts')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .eq('status', 'parsed');
+      if (receipts) setPendingReceipts(receipts);
+      
+    } catch (error: any) {
+      Alert.alert(error.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function confirmReceipt() {
+    if (!selectedReceipt) return;
+    try {
+      setLoading(true);
+      const { error: txError } = await supabase.from('transactions').insert({
+        user_id: session.user!.id,
+        receipt_id: selectedReceipt.id,
+        amount: parseFloat(amount),
+        merchant,
+        description,
+        date: new Date().toISOString(),
+      });
+      if (txError) throw txError;
+
+      const { error: rxError } = await supabase.from('receipts').update({
+        status: 'confirmed'
+      }).eq('id', selectedReceipt.id);
+      if (rxError) throw rxError;
+
+      Alert.alert('Success', 'Transaction saved!');
+      setSelectedReceipt(null);
+      fetchData();
+    } catch (e: any) {
+      Alert.alert('Error', e.message);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   if (showCamera) {
     return (
       <View style={{ flex: 1, marginTop: 40 }}>
-        <Button title="Back to Dashboard" onPress={() => setShowCamera(false)} />
+        <Button title="Back to Dashboard" onPress={() => { setShowCamera(false); fetchData(); }} />
         <View style={{ flex: 1 }}>
           <ReceiptCamera />
         </View>
@@ -122,21 +160,61 @@ function Dashboard({ session }: { session: Session }) {
     );
   }
 
+  if (selectedReceipt) {
+    return (
+      <ScrollView contentContainerStyle={styles.container}>
+        <Text style={styles.title}>Confirm Receipt</Text>
+        <Image source={{ uri: selectedReceipt.image_url }} style={{ height: 200, resizeMode: 'contain', marginBottom: 20 }} />
+        <Text style={{fontWeight: 'bold'}}>Extracted Data:</Text>
+        <Text>Merchant: {selectedReceipt.parsed_data?.merchantName}</Text>
+        <Text>Total: ${selectedReceipt.parsed_data?.totalAmount}</Text>
+        
+        <View style={styles.mt20}>
+          <TextInput style={styles.input} placeholder="Merchant" value={merchant} onChangeText={setMerchant} />
+          <TextInput style={styles.input} placeholder="Amount" value={amount} onChangeText={setAmount} keyboardType="numeric" />
+          <TextInput style={styles.input} placeholder="Description" value={description} onChangeText={setDescription} />
+        </View>
+        <Button title="Confirm Transaction" disabled={loading} onPress={confirmReceipt} />
+        <View style={styles.mt20}>
+          <Button title="Cancel" onPress={() => setSelectedReceipt(null)} color="gray" />
+        </View>
+      </ScrollView>
+    );
+  }
+
   return (
-    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Dashboard</Text>
       <Text>Welcome {session.user.email}</Text>
-      <Text>Your role is: {role || 'Not set'}</Text>
       
       <View style={styles.mt20}>
         <Button title="Scan Receipt" onPress={() => setShowCamera(true)} />
       </View>
 
+      {pendingReceipts.length > 0 && (
+        <View style={styles.mt20}>
+          <Text style={{fontWeight: 'bold', fontSize: 18, marginBottom: 10}}>Pending Receipts ({pendingReceipts.length})</Text>
+          {pendingReceipts.map(r => (
+            <View key={r.id} style={{ padding: 10, borderWidth: 1, borderColor: '#ccc', marginVertical: 5, borderRadius: 5, backgroundColor: '#fff' }}>
+              <Text style={{fontWeight: '500'}}>{r.parsed_data?.merchantName || 'Unknown'} - ${r.parsed_data?.totalAmount || '0'}</Text>
+              <View style={styles.mt20}>
+                <Button title="Review" onPress={() => {
+                  setSelectedReceipt(r);
+                  setMerchant(r.parsed_data?.merchantName || '');
+                  setAmount(r.parsed_data?.totalAmount?.toString() || '');
+                  setDescription('');
+                }} />
+              </View>
+            </View>
+          ))}
+        </View>
+      )}
+
       <View style={styles.mt20}>
-        <Button title="Sign Out" onPress={() => supabase.auth.signOut()} />
+        <Button title="Sign Out" onPress={() => supabase.auth.signOut()} color="red" />
       </View>
       <StatusBar style="auto" />
-    </View>
+    </ScrollView>
   );
 }
 
