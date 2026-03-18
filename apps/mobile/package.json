@@ -12,7 +12,12 @@
     "expo": "~55.0.6",
     "expo-status-bar": "~55.0.4",
     "react": "19.2.0",
-    "react-native": "0.83.2"
+    "react-native": "0.83.2",
+    "@react-native-async-storage/async-storage": "1.24.0",
+    "@supabase/supabase-js": "^2.48.0",
+    "react-native-url-polyfill": "^2.0.0",
+    "@repo/supabase": "workspace:*",
+    "@repo/types": "workspace:*"
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
