@@ -15,22 +15,30 @@
     "@repo/supabase": "workspace:*",
     "@repo/types": "workspace:*",
     "@repo/ui": "workspace:*",
+    "@sentry/nextjs": "^10.44.0",
     "@supabase/ssr": "latest",
     "@supabase/supabase-js": "latest",
     "next": "16.1.5",
     "papaparse": "^5.5.3",
+    "posthog-js": "^1.362.0",
+    "posthog-node": "^5.28.4",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "resend": "^6.9.4",
     "zod": "latest"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "@tailwindcss/postcss": "^4.2.2",
     "@types/node": "^22.15.3",
     "@types/papaparse": "^5.5.2",
     "@types/react": "19.2.2",
     "@types/react-dom": "19.2.2",
+    "autoprefixer": "^10.4.27",
     "eslint": "^9.39.1",
+    "postcss": "^8.5.8",
+    "tailwindcss": "^4.2.2",
     "typescript": "5.9.2"
   }
 }
